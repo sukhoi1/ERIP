@@ -1,0 +1,68 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+
+    // PDF example 1 // https://docs.webpay.by/#orderSignature // Электронная подпись заказа
+
+    // wsb_seed При оплате через ЕРИП значение поля не может начинаться на 0 (ноль).
+    var wsb_seed = DateTimeOffset.UtcNow.ToUnixTimeSeconds(); //1242649174; //  случайная последовательность символов (можно использовать текущее значение времени, к примеру, Unix Timestamp)
+    var wsb_storeid = 175091059; /* merchant_id */ // 175091059; // 11111111;
+    var wsb_order_num = $"ORDER-{DateTimeOffset.UtcNow .ToUnixTimeSeconds()}"; // 1452504816; // "ORDER-12345678";
+    var wsb_test = 1;
+    var wsb_version = 2;
+    var wsb_currency_id = "BYN";
+    var SecretKey = "12345678901234567890"; // Set in WebPay Admin Panel
+
+    var wsb_item = 21.90.ToString("#.00");
+    var wsb_total = (21.90 + 1).ToString("#.00");
+
+    // Значение объединенной строки:
+    // 124264917411111111ORDER-123456781BYN21.9012345678901234567890
+    // для версии протокола 2 (wsb_version = 2)
+
+    // для версии протокола 2 (wsb_version = 2)
+    // $wsb_signature = sha1($wsb_seed.$wsb_storeid.$wsb_order_num.$wsb_test.$wsb_currency_id.$wsb_total.$SecretKey);
+    var wsbV2Input = $"{wsb_seed}{wsb_storeid}{wsb_order_num}{wsb_test}{wsb_currency_id}{wsb_total}{SecretKey}";
+    var wsb_signature = ERIP.Services.HashService.Sha1(wsbV2Input);
+    //var equals = wsb_signature == "338d1647833079f9353907ad266ec0bb5264c0d9";
+    //// 338d1647833079f9353907ad266ec0bb5264c0d9
+
+    System.Diagnostics.Debug.WriteLine(wsb_signature);
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+</div>
+
+<form action="https://securesandbox.webpay.by/" method="post">
+
+    <input type="hidden" name="*scart">
+    <input type="hidden" name="wsb_version" value="@wsb_version">
+    <input type="hidden" name="wsb_language_id" value="russian">
+    <input type="hidden" name="wsb_storeid" value="@wsb_storeid">
+    <input type="hidden" name="wsb_store" value="Магазин site.by">
+    <input type="hidden" name="wsb_order_num" value="@wsb_order_num">
+    <input type="hidden" name="wsb_test" value="@wsb_test">
+    <input type="hidden" name="wsb_currency_id" value="@wsb_currency_id">
+    <input type="hidden" name="wsb_seed" value="@wsb_seed">
+    <input type="hidden" name="wsb_return_url" value="https://localhost:5001/">
+    <input type="hidden" name="wsb_cancel_return_url" value="https://localhost:5001/">
+    <input type="hidden" name="wsb_notify_url" value="https://localhost:5001/">
+    <input type="hidden" name="wsb_invoice_item_name[0]" value="Товар 1">
+    <input type="hidden" name="wsb_invoice_item_quantity[0]" value="1">
+    <input type="hidden" name="wsb_invoice_item_price[0]" value="@wsb_item">
+    <!--<input type="hidden" name="wsb_invoice_item_name[1]" value="Товар 2">
+    <input type="hidden" name="wsb_invoice_item_quantity[1]" value="1">
+    <input type="hidden" name="wsb_invoice_item_price[1]" value="51.75">-->
+    <input type="hidden" name="wsb_total" value="@wsb_total">
+    <input type="hidden" name="wsb_signature" value="@wsb_signature">
+    <input type="hidden" name="wsb_shipping_name" value="Стоимость доставки">
+    <input type="hidden" name="wsb_shipping_price" value="1.00">
+    <input type="hidden" name="wsb_discount_name" value="Скидка на товар">
+    <input type="hidden" name="wsb_discount_price" value="0.00">
+    <input type="hidden" name="wsb_due_date" value="@DateTimeOffset.UtcNow.AddDays(7).ToUnixTimeSeconds()">
+    <input type="submit" value="Купить">
+
+</form>
